@@ -27,31 +27,31 @@ const MasterDetailPage = {
       const name = master.display_name || Utils.getMasterName(master);
       const specs = Array.isArray(master.specializations) ? master.specializations : [];
 
+      const shortBio = master.bio || 'Создаю образы, в которых клиенту знакома лучшая версия. Работаю с цветом, формой и характером.';
       container.innerHTML = `
-        <!-- Master Header -->
-        <div style="background:linear-gradient(135deg,#FFB6C1,#FF69B4);padding:var(--space-xl) var(--space-md);color:white;text-align:center">
-          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FFB6C1,#FF69B4);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:white;border:2px solid rgba(255,105,180,0.4);margin:0 auto var(--space-md)">
-            ${master.avatar_url
-              ? `<img src="${master.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`
-              : Utils.getInitials(name)}
-          </div>
-          <div style="font-size:var(--font-size-xl);font-weight:700;margin-bottom:4px">${name}</div>
-          ${specs.length > 0 ? `<div style="color:var(--color-primary-light);font-size:var(--font-size-sm)">${specs.join(' · ')}</div>` : ''}
-          ${master.rating ? `
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px">
-              <span style="color:var(--color-primary);font-size:18px">★</span>
-              <span style="font-weight:600">${master.rating.toFixed(1)}</span>
-              <span style="color:rgba(255,255,255,0.7)">(${master.reviews_count} отзывов)</span>
+        <div class="master-hero-bg"></div>
+        <div class="master-hero-card-wrap">
+          <div class="master-hero-card">
+            <div class="master-hero-avatar">
+              ${master.avatar_url
+                ? `<img src="${master.avatar_url}" alt="${name}">`
+                : Utils.getInitials(name)}
             </div>
-          ` : ''}
-          ${master.bio ? `<div style="color:rgba(255,255,255,0.9);font-size:var(--font-size-sm);margin-top:var(--space-sm);line-height:1.6">${master.bio}</div>` : ''}
-          <button class="btn btn-primary" style="margin-top:var(--space-md)" onclick="App.navigate('book', { masterId: ${master.id} })">
-            💅 Записаться
-          </button>
+            ${master.rating ? `<div class="master-hero-rating">⭐ ${master.rating.toFixed(1)}</div>` : ''}
+            <div class="master-hero-name">${name}</div>
+            ${specs.length > 0 ? `<div class="master-hero-specs">${specs.slice(0, 3).map(spec => `<span>${spec}</span>`).join('')}</div>` : ''}
+            <div class="master-hero-stats">
+              <span>⭐ ${master.rating ? master.rating.toFixed(1) : '—'}</span>
+              <span>• ${master.reviews_count || 0} отзыва</span>
+              <span>• ${master.experience_years || 7} лет опыта</span>
+            </div>
+            <div class="master-hero-bio">${shortBio}</div>
+            <button class="master-hero-btn" onclick="App.navigate('book', { masterId: ${master.id} })">📅 Записаться</button>
+          </div>
         </div>
 
         <!-- Tabs -->
-        <div style="display:flex;border-bottom:1px solid var(--color-border-light);background:var(--color-surface)">
+        <div class="master-tabs-row">
           <button class="master-tab active" data-tab="services" onclick="MasterDetailPage.switchTab('services')">Услуги</button>
           <button class="master-tab" data-tab="portfolio" onclick="MasterDetailPage.switchTab('portfolio')">Портфолио</button>
           <button class="master-tab" data-tab="reviews" onclick="MasterDetailPage.switchTab('reviews')">Отзывы</button>
