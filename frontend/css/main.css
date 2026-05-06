@@ -2113,7 +2113,7 @@ a {
 }
 
 .master-hero-card-wrap {
-  margin-top: -94px;
+  margin-top: -108px;
   padding: 0 var(--space-md) var(--space-md);
 }
 
@@ -2167,7 +2167,12 @@ a {
   font-weight: 600;
 }
 
-.master-hero-stats { margin-top: 10px; color:#73616f; font-size: 13px; display:flex; justify-content:center; gap:5px; flex-wrap:wrap; }
+
+.master-hero-stats { margin-top: 10px; color:#73616f; font-size: 13px; display:flex; justify-content:center; gap:5px; flex-wrap:wrap; align-items:center; }
+.master-stat-dot { opacity: .65; }
+.master-stat-icon { font-size: 12px; vertical-align: baseline; margin-right: 2px; }
+.master-btn-icon { margin-right: 6px; }
+
 .master-hero-bio { margin: 12px auto 16px; max-width: 300px; color:#756875; font-size: 14px; line-height: 1.45; }
 .master-hero-btn {
   background: linear-gradient(135deg, #ff69b4, #ff1493);

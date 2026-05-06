@@ -36,8 +36,8 @@ const MasterDetailPage = {
       const experienceWord = this.getYearsWord(experienceYears);
       const stats = [
         hasRating ? `⭐ ${Number(master.rating).toFixed(1)}` : '',
-        hasReviews ? `${reviewsCount} ${reviewWord}` : '',
-        `${experienceYears} ${experienceWord} опыта`
+        hasReviews ? `<span class="master-stat-icon">💬</span> ${reviewsCount} ${reviewWord}` : '',
+        `<span class="master-stat-icon">⏱</span> ${experienceYears} ${experienceWord} опыта`
       ].filter(Boolean);
       container.innerHTML = `
         <div class="master-hero-bg"></div>
@@ -51,9 +51,9 @@ const MasterDetailPage = {
             ${master.rating ? `<div class="master-hero-rating">⭐ ${master.rating.toFixed(1)}</div>` : ''}
             <div class="master-hero-name">${name}</div>
             ${specs.length > 0 ? `<div class="master-hero-specs">${specs.slice(0, 3).map(spec => `<span>${spec}</span>`).join('')}</div>` : ''}
-            <div class="master-hero-stats">${stats.join(' • ')}</div>
+            <div class="master-hero-stats">${stats.join('<span class="master-stat-dot">•</span>')}</div>
             <div class="master-hero-bio">${shortBio}</div>
-            <button class="master-hero-btn" onclick="App.navigate('book', { masterId: ${master.id} })">📅 Записаться</button>
+            <button class="master-hero-btn" onclick="App.navigate('book', { masterId: ${master.id} })"><span class="master-btn-icon">🗓</span> Записаться</button>
           </div>
         </div>
 
