@@ -31,6 +31,14 @@ const MasterDetailPage = {
       const reviewsCount = Number(master.reviews_count) || 0;
       const reviewWord = this.getReviewWord(reviewsCount);
       const hasReviews = reviewsCount > 0;
+      const hasRating = Number(master.rating) > 0;
+      const experienceYears = Number(master.experience_years) || 7;
+      const experienceWord = this.getYearsWord(experienceYears);
+      const stats = [
+        hasRating ? `⭐ ${Number(master.rating).toFixed(1)}` : '',
+        hasReviews ? `${reviewsCount} ${reviewWord}` : '',
+        `${experienceYears} ${experienceWord} опыта`
+      ].filter(Boolean);
       container.innerHTML = `
         <div class="master-hero-bg"></div>
         <div class="master-hero-card-wrap">
@@ -43,11 +51,7 @@ const MasterDetailPage = {
             ${master.rating ? `<div class="master-hero-rating">⭐ ${master.rating.toFixed(1)}</div>` : ''}
             <div class="master-hero-name">${name}</div>
             ${specs.length > 0 ? `<div class="master-hero-specs">${specs.slice(0, 3).map(spec => `<span>${spec}</span>`).join('')}</div>` : ''}
-            <div class="master-hero-stats">
-              <span>⭐ ${master.rating ? master.rating.toFixed(1) : '—'}</span>
-              ${hasReviews ? `<span>• ${reviewsCount} ${reviewWord}</span>` : ''}
-              <span>• ${master.experience_years || 7} лет опыта</span>
-            </div>
+            <div class="master-hero-stats">${stats.join(' • ')}</div>
             <div class="master-hero-bio">${shortBio}</div>
             <button class="master-hero-btn" onclick="App.navigate('book', { masterId: ${master.id} })">📅 Записаться</button>
           </div>
@@ -81,6 +85,14 @@ const MasterDetailPage = {
     if (mod10 === 1 && mod100 !== 11) return 'отзыв';
     if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'отзыва';
     return 'отзывов';
+  },
+
+  getYearsWord(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'год';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'года';
+    return 'лет';
   },
 
   switchTab(tab) {
