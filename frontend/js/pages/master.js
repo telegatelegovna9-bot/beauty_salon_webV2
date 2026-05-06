@@ -28,6 +28,9 @@ const MasterDetailPage = {
       const specs = Array.isArray(master.specializations) ? master.specializations : [];
 
       const shortBio = master.bio || 'Создаю образы, в которых клиенту знакома лучшая версия. Работаю с цветом, формой и характером.';
+      const reviewsCount = Number(master.reviews_count) || 0;
+      const reviewWord = this.getReviewWord(reviewsCount);
+      const hasReviews = reviewsCount > 0;
       container.innerHTML = `
         <div class="master-hero-bg"></div>
         <div class="master-hero-card-wrap">
@@ -42,7 +45,7 @@ const MasterDetailPage = {
             ${specs.length > 0 ? `<div class="master-hero-specs">${specs.slice(0, 3).map(spec => `<span>${spec}</span>`).join('')}</div>` : ''}
             <div class="master-hero-stats">
               <span>⭐ ${master.rating ? master.rating.toFixed(1) : '—'}</span>
-              <span>• ${master.reviews_count || 0} отзыва</span>
+              ${hasReviews ? `<span>• ${reviewsCount} ${reviewWord}</span>` : ''}
               <span>• ${master.experience_years || 7} лет опыта</span>
             </div>
             <div class="master-hero-bio">${shortBio}</div>
@@ -70,6 +73,14 @@ const MasterDetailPage = {
     } catch (e) {
       container.innerHTML = EmptyState.render('⚠️', 'Ошибка загрузки', e.message);
     }
+  },
+
+  getReviewWord(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'отзыв';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'отзыва';
+    return 'отзывов';
   },
 
   switchTab(tab) {
