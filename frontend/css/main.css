@@ -2108,12 +2108,12 @@ a {
 
 /* Master details hero card */
 .master-hero-bg {
-  height: 190px;
-  background: linear-gradient(180deg, var(--color-bg-secondary) 0%, #f0bad8 55%, #efd4e2 100%);
+  height: 150px;
+  background: linear-gradient(180deg, var(--color-bg-secondary) 0%, #f3cade 58%, var(--color-bg) 100%);
 }
 
 .master-hero-card-wrap {
-  margin-top: -96px;
+  margin-top: -76px;
   padding: 0 var(--space-md) var(--space-md);
 }
 
