@@ -26,40 +26,79 @@ const MasterDetailPage = {
       this.master = master;
       const name = master.display_name || Utils.getMasterName(master);
       const specs = Array.isArray(master.specializations) ? master.specializations : [];
+      const rating = Number(master.rating) || 0;
+      const reviewsCount = Number(master.reviews_count) || 0;
+      const experienceYears = Number(master.experience_years) || 0;
+
+      const stats = [];
+      if (rating > 0) {
+        stats.push(`<span class="master-profile-stat"><span class="master-profile-stat-star">★</span> ${rating.toFixed(1)}</span>`);
+      }
+      if (reviewsCount > 0) {
+        stats.push(`<span class="master-profile-stat">${reviewsCount} ${this._pluralize(reviewsCount, 'отзыв', 'отзыва', 'отзывов')}</span>`);
+      }
+      if (experienceYears > 0) {
+        stats.push(`<span class="master-profile-stat">${experienceYears}+ ${this._pluralize(experienceYears, 'год', 'года', 'лет')} опыта</span>`);
+      }
 
       container.innerHTML = `
-        <!-- Master Header -->
-        <div style="background:linear-gradient(135deg,#FFB6C1,#FF69B4);padding:var(--space-xl) var(--space-md);color:white;text-align:center">
-          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FFB6C1,#FF69B4);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:white;border:2px solid rgba(255,105,180,0.4);margin:0 auto var(--space-md)">
-            ${master.avatar_url
-              ? `<img src="${master.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`
-              : Utils.getInitials(name)}
-          </div>
-          <div style="font-size:var(--font-size-xl);font-weight:700;margin-bottom:4px">${name}</div>
-          ${specs.length > 0 ? `<div style="color:var(--color-primary-light);font-size:var(--font-size-sm)">${specs.join(' · ')}</div>` : ''}
-          ${master.rating ? `
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px">
-              <span style="color:var(--color-primary);font-size:18px">★</span>
-              <span style="font-weight:600">${master.rating.toFixed(1)}</span>
-              <span style="color:rgba(255,255,255,0.7)">(${master.reviews_count} отзывов)</span>
+        <div class="master-detail-wrap">
+          <!-- Master Profile Card -->
+          <article class="master-profile-card">
+            <div class="master-profile-card-bg"></div>
+
+            <div class="master-profile-avatar-wrap">
+              <div class="master-profile-avatar">
+                ${master.avatar_url
+                  ? `<img src="${master.avatar_url}" alt="${name}">`
+                  : `<span class="master-profile-avatar-initials">${Utils.getInitials(name)}</span>`}
+              </div>
+              ${rating > 0 ? `
+                <div class="master-profile-avatar-badge" aria-label="Рейтинг ${rating.toFixed(1)}">
+                  <span class="master-profile-avatar-badge-star">★</span>
+                  <span class="master-profile-avatar-badge-value">${rating.toFixed(1)}</span>
+                </div>
+              ` : ''}
             </div>
-          ` : ''}
-          ${master.bio ? `<div style="color:rgba(255,255,255,0.9);font-size:var(--font-size-sm);margin-top:var(--space-sm);line-height:1.6">${master.bio}</div>` : ''}
-          <button class="btn btn-primary" style="margin-top:var(--space-md)" onclick="App.navigate('book', { masterId: ${master.id} })">
-            💅 Записаться
-          </button>
-        </div>
 
-        <!-- Tabs -->
-        <div style="display:flex;border-bottom:1px solid var(--color-border-light);background:var(--color-surface)">
-          <button class="master-tab active" data-tab="services" onclick="MasterDetailPage.switchTab('services')">Услуги</button>
-          <button class="master-tab" data-tab="portfolio" onclick="MasterDetailPage.switchTab('portfolio')">Портфолио</button>
-          <button class="master-tab" data-tab="reviews" onclick="MasterDetailPage.switchTab('reviews')">Отзывы</button>
-        </div>
+            <h1 class="master-profile-name">${name}</h1>
 
-        <!-- Tab Content -->
-        <div id="master-tab-content" style="padding:var(--space-md)">
-          ${this.renderServicesTab(services)}
+            ${specs.length > 0 ? `
+              <div class="master-profile-chips">
+                ${specs.map(s => `<span class="master-profile-chip">${s}</span>`).join('')}
+              </div>
+            ` : ''}
+
+            ${stats.length > 0 ? `
+              <div class="master-profile-stats">
+                ${stats.join('<span class="master-profile-stats-dot">·</span>')}
+              </div>
+            ` : ''}
+
+            ${master.bio ? `<p class="master-profile-bio">${master.bio}</p>` : ''}
+
+            <button class="master-profile-cta" onclick="App.navigate('book', { masterId: ${master.id} })">
+              <svg class="master-profile-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="3" ry="3"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              Записаться
+            </button>
+          </article>
+
+          <!-- Tabs -->
+          <div class="master-tabs" role="tablist">
+            <button class="master-tab active" data-tab="services" role="tab" aria-selected="true" onclick="MasterDetailPage.switchTab('services')">Услуги</button>
+            <button class="master-tab" data-tab="portfolio" role="tab" aria-selected="false" onclick="MasterDetailPage.switchTab('portfolio')">Портфолио</button>
+            <button class="master-tab" data-tab="reviews" role="tab" aria-selected="false" onclick="MasterDetailPage.switchTab('reviews')">Отзывы</button>
+          </div>
+
+          <!-- Tab Content -->
+          <div id="master-tab-content" class="master-tab-content">
+            ${this.renderServicesTab(services)}
+          </div>
         </div>
       `;
 
@@ -72,10 +111,20 @@ const MasterDetailPage = {
     }
   },
 
+  _pluralize(n, one, few, many) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  },
+
   switchTab(tab) {
     this.activeTab = tab;
     document.querySelectorAll('.master-tab').forEach(t => {
-      t.classList.toggle('active', t.dataset.tab === tab);
+      const isActive = t.dataset.tab === tab;
+      t.classList.toggle('active', isActive);
+      t.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
     const content = document.getElementById('master-tab-content');
     if (!content) return;
