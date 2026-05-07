@@ -7,6 +7,18 @@ const { authMiddleware } = require('../middleware/auth');
 const { masterOrAdmin } = require('../middleware/rbac');
 const { getDb } = require('../database/db');
 
+function ensurePortfolioImagesColumn() {
+  const db = getDb();
+  const columns = db.prepare(`PRAGMA table_info(portfolio_items)`).all();
+  const hasImageUrls = columns.some(col => col.name === 'image_urls');
+  if (!hasImageUrls) {
+    db.prepare('ALTER TABLE portfolio_items ADD COLUMN image_urls TEXT').run();
+  }
+}
+
+ensurePortfolioImagesColumn();
+
+
 // Configure multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -78,7 +90,7 @@ router.get('/master/:masterId', authMiddleware, (req, res) => {
 });
 
 // POST /api/portfolio - upload portfolio item
-router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (req, res) => {
+router.post('/', authMiddleware, masterOrAdmin, upload.array('images', 10), async (req, res) => {
   const db = getDb();
   const { category, title, description, service_id, is_featured, image_url } = req.body;
 
@@ -89,23 +101,22 @@ router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (r
   const profile = db.prepare('SELECT * FROM masters_profiles WHERE user_id = ?').get(req.user.id);
   if (!profile) return res.status(404).json({ error: 'Master profile not found' });
 
-  let finalImageUrl = image_url;
+  const baseUrl = process.env.WEBAPP_URL || `http://localhost:${process.env.PORT || 3001}`;
+  const uploadedUrls = (req.files || []).map(file => `${baseUrl}/uploads/portfolio/${file.filename}`);
+  const images = uploadedUrls.length ? uploadedUrls : (image_url ? [image_url] : []);
 
-  if (req.file) {
-    const baseUrl = process.env.WEBAPP_URL || `http://localhost:${process.env.PORT || 3001}`;
-    finalImageUrl = `${baseUrl}/uploads/portfolio/${req.file.filename}`;
+  if (!images.length) {
+    return res.status(400).json({ error: 'At least one image file or image_url is required' });
   }
 
-  if (!finalImageUrl) {
-    return res.status(400).json({ error: 'Image file or image_url is required' });
-  }
-
+  const primaryImage = images[0];
   const result = db.prepare(`
-    INSERT INTO portfolio_items (master_id, image_url, category, title, description, service_id, is_featured)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO portfolio_items (master_id, image_url, image_urls, category, title, description, service_id, is_featured)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     profile.id,
-    finalImageUrl,
+    primaryImage,
+    JSON.stringify(images),
     category,
     title || null,
     description || null,
@@ -114,7 +125,7 @@ router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (r
   );
 
   const item = db.prepare('SELECT * FROM portfolio_items WHERE id = ?').get(result.lastInsertRowid);
-  res.status(201).json({ item });
+  res.status(201).json({ item, images_count: images.length });
 });
 
 // PUT /api/portfolio/:id - update portfolio item

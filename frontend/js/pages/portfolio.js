@@ -110,7 +110,7 @@ const PortfolioPage = {
     `;
   },
 
-  openItem(index) {
+  openItem(index, imgIndex = 0) {
     const filtered = this.activeCategory === 'all'
       ? this.items
       : this.items.filter(item => item.category === this.activeCategory);
@@ -120,9 +120,20 @@ const PortfolioPage = {
 
     Utils.haptic('light');
 
-    Modal.open(`
+    const images = (() => {
+      try {
+        const parsed = item.image_urls ? JSON.parse(item.image_urls) : [];
+        return Array.isArray(parsed) && parsed.length ? parsed : [item.image_url];
+      } catch (_) {
+        return [item.image_url];
+      }
+    })();
+
+    const openGalleryImage = (imgIndex) => {
+      const image = images[imgIndex];
+      Modal.open(`
       <div style="margin:-var(--space-md)">
-        <img src="${item.image_url}" alt="${item.title || ''}"
+        <img src="${image}" alt="${item.title || ''}"
              style="width:100%;max-height:70vh;object-fit:contain;border-radius:var(--radius-md);margin-bottom:var(--space-md)">
         ${item.title ? `<div style="font-weight:600;font-size:var(--font-size-lg);margin-bottom:4px">${item.title}</div>` : ''}
         ${item.description ? `<div style="color:var(--color-text-secondary)">${item.description}</div>` : ''}
@@ -130,13 +141,23 @@ const PortfolioPage = {
           <span class="chip chip-primary">${Utils.getCategoryInfo(item.category).emoji} ${Utils.getCategoryInfo(item.category).label}</span>
           ${item.master_name ? `<span class="chip">👤 ${item.master_name}</span>` : ''}
         </div>
+        ${images.length > 1 ? `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-sm);margin-top:var(--space-sm)">
+            <button class="btn btn-secondary btn-sm" ${imgIndex === 0 ? 'disabled' : ''} onclick="Modal.close();PortfolioPage.openItem(${index}, ${imgIndex - 1})">← Фото</button>
+            <div style="font-size:var(--font-size-sm);color:var(--color-text-secondary)">${imgIndex + 1} / ${images.length}</div>
+            <button class="btn btn-secondary btn-sm" ${imgIndex === images.length - 1 ? 'disabled' : ''} onclick="Modal.close();PortfolioPage.openItem(${index}, ${imgIndex + 1})">Фото →</button>
+          </div>
+        ` : ''}
         ${index > 0 || index < filtered.length - 1 ? `
           <div style="display:flex;gap:var(--space-sm);margin-top:var(--space-md)">
-            ${index > 0 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index-1})">← Пред.</button>` : ''}
-            ${index < filtered.length - 1 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index+1})">След. →</button>` : ''}
+            ${index > 0 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index-1}, 0)">← Пред. пост</button>` : ''}
+            ${index < filtered.length - 1 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index+1}, 0)">След. пост →</button>` : ''}
           </div>
         ` : ''}
       </div>
     `);
+    };
+
+    openGalleryImage(imgIndex);
   }
 };

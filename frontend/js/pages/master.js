@@ -390,8 +390,9 @@ const MasterProfilePage = {
     Modal.open(`
       <div style="display:flex;flex-direction:column;gap:var(--space-md)">
         <div class="form-group">
-          <label class="form-label">URL изображения</label>
-          <input class="form-input" id="portfolio-url" placeholder="https://...">
+          <label class="form-label">Фото (до 10 штук)</label>
+          <input class="form-input" id="portfolio-files" type="file" accept="image/*" multiple>
+          <div style="margin-top:6px;color:var(--color-text-tertiary);font-size:var(--font-size-xs)">Можно выбрать несколько фото — они создадут один пост-галерею.</div>
         </div>
         <div class="form-group">
           <label class="form-label">Категория</label>
@@ -411,17 +412,23 @@ const MasterProfilePage = {
   },
 
   async addPortfolioItem() {
-    const url = document.getElementById('portfolio-url')?.value;
+    const files = document.getElementById('portfolio-files')?.files;
     const category = document.getElementById('portfolio-category')?.value;
     const title = document.getElementById('portfolio-title')?.value;
 
-    if (!url) { Toast.error('Введите URL изображения'); return; }
+    if (!files || files.length === 0) { Toast.error('Выберите хотя бы одно фото'); return; }
+    if (files.length > 10) { Toast.error('Можно загрузить максимум 10 фото'); return; }
     if (!category) { Toast.error('Выберите категорию'); return; }
 
+    const formData = new FormData();
+    Array.from(files).forEach(file => formData.append('images', file));
+    formData.append('category', category);
+    if (title) formData.append('title', title);
+
     try {
-      await API.post('/portfolio', { image_url: url, category, title });
+      const result = await API.portfolio.create(formData);
       Modal.close();
-      Toast.success('Добавлено в портфолио');
+      Toast.success(`Пост добавлен (${result?.images_count || files.length} фото)`);
       await this.loadPortfolio();
     } catch (e) {
       Toast.error(e.message || 'Ошибка');
