@@ -147,7 +147,7 @@ const PortfolioPage = {
           ${item.master_name ? `<span class="chip">👤 ${item.master_name}</span>` : ''}
           <span class="chip chip-primary">${Utils.getCategoryInfo(item.category).emoji} ${Utils.getCategoryInfo(item.category).label}</span>
         </div>
-        ${images.length > 1 ? `<div style="text-align:center;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:6px">${imgIndex + 1} / ${images.length}</div><div style="text-align:center;font-size:var(--font-size-xs);color:var(--color-text-tertiary);margin-top:2px">ПК: клик по левой/правой части фото или колесо мыши</div>` : ''}
+        ${images.length > 1 ? `<div style="text-align:center;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:6px">${imgIndex + 1} / ${images.length}</div>` : ''}
         ${index > 0 || index < filtered.length - 1 ? `
           <div style="display:flex;gap:var(--space-sm);margin-top:var(--space-md)">
             ${index > 0 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index-1}, 0)">← Пред. пост</button>` : ''}
