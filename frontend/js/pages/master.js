@@ -139,19 +139,35 @@ const MasterDetailPage = {
     if (!reviews || reviews.length === 0) {
       return EmptyState.render('⭐', 'Нет отзывов', 'Будьте первым, кто оставит отзыв');
     }
-    return `<div style="display:flex;flex-direction:column;gap:var(--space-md)">
-      ${reviews.map(r => `
-        <div class="card">
-          <div class="card-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div style="font-weight:600">${r.first_name || r.username || 'Клиент'}</div>
-              <div style="color:var(--color-primary)">${Utils.renderStars(r.rating)}</div>
+
+    return `<div style="display:flex;flex-direction:column;gap:var(--space-sm)">
+      ${reviews.map(r => {
+        const name = r.first_name || r.username || 'Клиент';
+        const initials = Utils.getInitials(name);
+        const reviewDate = r.created_at ? Utils.formatDate(r.created_at.split('T')[0], 'short') : '';
+
+        return `
+          <div class="card" style="border-radius:14px;overflow:hidden">
+            <div class="card-body" style="padding:12px">
+              <div style="display:flex;align-items:flex-start;gap:10px">
+                <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark);font-size:12px;font-weight:700;flex-shrink:0">
+                  ${r.client_avatar_url
+                    ? `<img src="${r.client_avatar_url}" alt="${name}" style="width:100%;height:100%;object-fit:cover">`
+                    : initials}
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+                    <div style="font-weight:700;font-size:14px">${name}</div>
+                    <div style="color:var(--color-primary);font-size:14px">${Utils.renderStars(Number(r.rating) || 0)}</div>
+                  </div>
+                  ${r.comment ? `<div style="color:var(--color-text-secondary);font-size:13px;line-height:1.35">${r.comment}</div>` : '<div style="color:var(--color-text-tertiary);font-size:12px">Без комментария</div>'}
+                  ${reviewDate ? `<div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">${reviewDate}</div>` : ''}
+                </div>
+              </div>
             </div>
-            ${r.comment ? `<div style="color:var(--color-text-secondary);font-size:var(--font-size-sm)">${r.comment}</div>` : ''}
-            <div style="font-size:var(--font-size-xs);color:var(--color-text-tertiary);margin-top:4px">${Utils.formatDate(r.created_at?.split('T')[0], 'short')}</div>
           </div>
-        </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>`;
   },
 
