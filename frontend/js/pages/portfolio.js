@@ -129,25 +129,21 @@ const PortfolioPage = {
       }
     })();
 
-    const openGalleryImage = (imgIndex) => {
-      const image = images[imgIndex];
-      Modal.open(`
-      <div style="margin:-var(--space-md)">
-        <img src="${image}" alt="${item.title || ''}"
-             style="width:100%;max-height:70vh;object-fit:contain;border-radius:var(--radius-md);margin-bottom:var(--space-md)">
-        ${item.title ? `<div style="font-weight:600;font-size:var(--font-size-lg);margin-bottom:4px">${item.title}</div>` : ''}
-        ${item.description ? `<div style="color:var(--color-text-secondary)">${item.description}</div>` : ''}
-        <div style="display:flex;align-items:center;gap:8px;margin-top:var(--space-sm)">
-          <span class="chip chip-primary">${Utils.getCategoryInfo(item.category).emoji} ${Utils.getCategoryInfo(item.category).label}</span>
-          ${item.master_name ? `<span class="chip">👤 ${item.master_name}</span>` : ''}
+    const image = images[imgIndex] || images[0];
+    Modal.open(`
+      <div style="margin:-var(--space-md);overflow:hidden">
+        <div id="portfolio-gallery-swipe"
+             ontouchstart="PortfolioPage.onGalleryTouchStart(event)"
+             ontouchend="PortfolioPage.onGalleryTouchEnd(event, ${index}, ${imgIndex}, ${images.length})"
+             style="touch-action:pan-x;user-select:none">
+          <img src="${image}" alt="${item.title || ''}"
+               style="width:100%;max-height:68vh;object-fit:contain;border-radius:var(--radius-md);margin-bottom:var(--space-sm)">
         </div>
-        ${images.length > 1 ? `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-sm);margin-top:var(--space-sm)">
-            <button class="btn btn-secondary btn-sm" ${imgIndex === 0 ? 'disabled' : ''} onclick="Modal.close();PortfolioPage.openItem(${index}, ${imgIndex - 1})">← Фото</button>
-            <div style="font-size:var(--font-size-sm);color:var(--color-text-secondary)">${imgIndex + 1} / ${images.length}</div>
-            <button class="btn btn-secondary btn-sm" ${imgIndex === images.length - 1 ? 'disabled' : ''} onclick="Modal.close();PortfolioPage.openItem(${index}, ${imgIndex + 1})">Фото →</button>
-          </div>
-        ` : ''}
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
+          ${item.master_name ? `<span class="chip">👤 ${item.master_name}</span>` : ''}
+          <span class="chip chip-primary">${Utils.getCategoryInfo(item.category).emoji} ${Utils.getCategoryInfo(item.category).label}</span>
+        </div>
+        ${images.length > 1 ? `<div style="text-align:center;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:6px">${imgIndex + 1} / ${images.length}</div>` : ''}
         ${index > 0 || index < filtered.length - 1 ? `
           <div style="display:flex;gap:var(--space-sm);margin-top:var(--space-md)">
             ${index > 0 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index-1}, 0)">← Пред. пост</button>` : ''}
@@ -156,8 +152,26 @@ const PortfolioPage = {
         ` : ''}
       </div>
     `);
-    };
+  },
 
-    openGalleryImage(imgIndex);
+  onGalleryTouchStart(event) {
+    this._galleryTouchStartX = event.changedTouches?.[0]?.clientX || 0;
+  },
+
+  onGalleryTouchEnd(event, postIndex, imgIndex, total) {
+    const endX = event.changedTouches?.[0]?.clientX || 0;
+    const deltaX = endX - (this._galleryTouchStartX || 0);
+    if (Math.abs(deltaX) < 35) return;
+
+    if (deltaX < 0 && imgIndex < total - 1) {
+      Modal.close();
+      this.openItem(postIndex, imgIndex + 1);
+      return;
+    }
+    if (deltaX > 0 && imgIndex > 0) {
+      Modal.close();
+      this.openItem(postIndex, imgIndex - 1);
+    }
   }
+
 };
