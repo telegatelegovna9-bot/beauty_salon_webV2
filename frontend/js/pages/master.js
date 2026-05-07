@@ -140,33 +140,59 @@ const MasterDetailPage = {
       return EmptyState.render('⭐', 'Нет отзывов', 'Будьте первым, кто оставит отзыв');
     }
 
+    const safeReviews = reviews.map(r => ({ ...r, _rating: Number(r.rating) || 0 }));
+    const total = safeReviews.length;
+    const avg = safeReviews.reduce((sum, r) => sum + r._rating, 0) / total;
+    const stars = [5, 4, 3, 2, 1].map(star => {
+      const count = safeReviews.filter(r => Math.round(r._rating) === star).length;
+      const percent = total ? (count / total) * 100 : 0;
+      return `<div style="display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary)">
+        <span>${star}★</span>
+        <div style="height:6px;background:var(--color-border-light);border-radius:999px;overflow:hidden"><div style="height:100%;width:${percent}%;background:linear-gradient(135deg,#ff69b4,#ff1493)"></div></div>
+        <span style="text-align:right">${count}</span>
+      </div>`;
+    }).join('');
+
     return `<div style="display:flex;flex-direction:column;gap:var(--space-sm)">
-      ${reviews.map(r => {
+      <div class="card" style="border-radius:16px">
+        <div class="card-body" style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:14px">
+          <div style="text-align:center;border-right:1px solid var(--color-border-light);padding-right:10px">
+            <div style="font-size:40px;font-weight:800;line-height:1;color:var(--color-text-primary)">${avg.toFixed(1)}</div>
+            <div style="color:var(--color-primary);font-size:20px;letter-spacing:1px">★★★★★</div>
+            <div style="color:var(--color-text-secondary);font-size:13px">${total} ${this.getReviewWord(total)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">${stars}</div>
+        </div>
+      </div>
+
+      ${safeReviews.map(r => {
         const name = r.first_name || r.username || 'Клиент';
         const initials = Utils.getInitials(name);
-        const reviewDate = r.created_at ? Utils.formatDate(r.created_at.split('T')[0], 'short') : '';
+        let dateTime = '--:--';
+        if (r.created_at) {
+          const d = new Date(r.created_at);
+          if (!Number.isNaN(d.getTime())) {
+            dateTime = `${Utils.formatDate(r.created_at.split('T')[0], 'short')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          }
+        }
 
-        return `
-          <div class="card" style="border-radius:14px;overflow:hidden">
-            <div class="card-body" style="padding:12px">
-              <div style="display:flex;align-items:flex-start;gap:10px">
-                <div style="width:36px;height:36px;border-radius:50%;overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark);font-size:12px;font-weight:700;flex-shrink:0">
-                  ${r.client_avatar_url
-                    ? `<img src="${r.client_avatar_url}" alt="${name}" style="width:100%;height:100%;object-fit:cover">`
-                    : initials}
+        return `<div class="card" style="border-radius:16px;overflow:hidden">
+          <div class="card-body" style="padding:14px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark);font-size:12px;font-weight:700;flex-shrink:0">
+                  ${r.client_avatar_url ? `<img src="${r.client_avatar_url}" alt="${name}" style="width:100%;height:100%;object-fit:cover">` : initials}
                 </div>
-                <div style="flex:1;min-width:0">
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
-                    <div style="font-weight:700;font-size:14px">${name}</div>
-                    <div style="color:var(--color-primary);font-size:14px">${Utils.renderStars(Number(r.rating) || 0)}</div>
-                  </div>
-                  ${r.comment ? `<div style="color:var(--color-text-secondary);font-size:13px;line-height:1.35">${r.comment}</div>` : '<div style="color:var(--color-text-tertiary);font-size:12px">Без комментария</div>'}
-                  ${reviewDate ? `<div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px">${reviewDate}</div>` : ''}
+                <div style="min-width:0">
+                  <div style="font-size:22px;font-weight:700;line-height:1.1">${name}</div>
+                  <div style="color:var(--color-primary);font-size:18px;line-height:1">${Utils.renderStars(r._rating)}</div>
                 </div>
               </div>
+              <div style="font-size:12px;color:var(--color-text-tertiary);white-space:nowrap">${dateTime}</div>
             </div>
+            <div style="color:var(--color-text-secondary);font-size:14px;line-height:1.45">${r.comment || 'Без комментария'}</div>
           </div>
-        `;
+        </div>`;
       }).join('')}
     </div>`;
   },
