@@ -140,7 +140,7 @@ const PortfolioPage = {
              style="touch-action:pan-x;user-select:none;cursor:pointer">
           <div style="height:min(62vh,520px);border-radius:var(--radius-md);overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-sm)">
             <img src="${image}" alt="${item.title || ''}"
-                 style="width:100%;height:100%;object-fit:contain;display:block">
+                 style="width:100%;height:100%;object-fit:cover;display:block">
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
