@@ -21,10 +21,18 @@ function ensurePortfolioImagesColumn() {
 let portfolioImagesColumnEnsured = false;
 
 
+function getUploadsRoot() {
+  return path.resolve(process.env.UPLOADS_PATH || './uploads');
+}
+
+function getPortfolioUploadDir() {
+  return path.join(getUploadsRoot(), 'portfolio');
+}
+
 // Configure multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.resolve(process.env.UPLOADS_PATH || './uploads/portfolio');
+    const uploadDir = getPortfolioUploadDir();
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
@@ -186,7 +194,7 @@ router.delete('/:id', authMiddleware, masterOrAdmin, (req, res) => {
   // Delete file if local
   if (item.image_url && item.image_url.includes('/uploads/')) {
     const filename = path.basename(item.image_url);
-    const filePath = path.resolve(process.env.UPLOADS_PATH || './uploads/portfolio', filename);
+    const filePath = path.join(getPortfolioUploadDir(), filename);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
 
