@@ -112,7 +112,10 @@ router.post('/', authMiddleware, masterOrAdmin, upload.array('images', 10), asyn
   const profile = db.prepare('SELECT * FROM masters_profiles WHERE user_id = ?').get(req.user.id);
   if (!profile) return res.status(404).json({ error: 'Master profile not found' });
 
-  const baseUrl = process.env.WEBAPP_URL || `http://localhost:${process.env.PORT || 3001}`;
+  const reqProto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const reqHost = req.headers['x-forwarded-host'] || req.get('host');
+  const runtimeBaseUrl = reqHost ? `${reqProto}://${reqHost}` : null;
+  const baseUrl = (process.env.WEBAPP_URL || runtimeBaseUrl || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
   const uploadedUrls = (req.files || []).map(file => `${baseUrl}/uploads/portfolio/${file.filename}`);
   const images = uploadedUrls.length ? uploadedUrls : (image_url ? [image_url] : []);
 
