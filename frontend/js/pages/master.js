@@ -154,7 +154,7 @@ const MasterDetailPage = {
     }).join('');
 
     return `<div style="display:flex;flex-direction:column;gap:var(--space-sm)">
-      <div class="card" style="border-radius:16px">
+      <div class="card" style="border-radius:16px;background:#fff;border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm)">
         <div class="card-body" style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:14px">
           <div style="text-align:center;border-right:1px solid var(--color-border-light);padding-right:10px">
             <div style="font-size:40px;font-weight:800;line-height:1;color:var(--color-text-primary)">${avg.toFixed(1)}</div>
@@ -177,7 +177,7 @@ const MasterDetailPage = {
           }
         }
 
-        return `<div class="card" style="border-radius:16px;overflow:hidden">
+        return `<div class="card" style="border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm)">
           <div class="card-body" style="padding:14px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
               <div style="display:flex;align-items:center;gap:10px;min-width:0">
