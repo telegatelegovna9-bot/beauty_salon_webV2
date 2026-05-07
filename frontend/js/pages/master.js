@@ -146,8 +146,8 @@ const MasterDetailPage = {
     const stars = [5, 4, 3, 2, 1].map(star => {
       const count = safeReviews.filter(r => Math.round(r._rating) === star).length;
       const percent = total ? (count / total) * 100 : 0;
-      return `<div style="display:grid;grid-template-columns:24px 1fr 24px;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary)">
-        <span>${star}★</span>
+      return `<div style="display:grid;grid-template-columns:34px 1fr 24px;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary)">
+        <span style="display:flex;align-items:center;gap:2px"><span>${star}</span><span style="color:var(--color-primary)">★</span></span>
         <div style="height:6px;background:var(--color-border-light);border-radius:999px;overflow:hidden"><div style="height:100%;width:${percent}%;background:linear-gradient(135deg,#ff69b4,#ff1493)"></div></div>
         <span style="text-align:right">${count}</span>
       </div>`;
@@ -172,7 +172,8 @@ const MasterDetailPage = {
         if (r.created_at) {
           const d = new Date(r.created_at);
           if (!Number.isNaN(d.getTime())) {
-            dateTime = `${Utils.formatDate(r.created_at.split('T')[0], 'short')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            const datePart = r.created_at.includes('T') ? r.created_at.split('T')[0] : r.created_at;
+            dateTime = `${Utils.formatDate(datePart, 'short')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
           }
         }
 
@@ -184,7 +185,7 @@ const MasterDetailPage = {
                   ${r.client_avatar_url ? `<img src="${r.client_avatar_url}" alt="${name}" style="width:100%;height:100%;object-fit:cover">` : initials}
                 </div>
                 <div style="min-width:0">
-                  <div style="font-size:22px;font-weight:700;line-height:1.1">${name}</div>
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="font-size:22px;font-weight:700;line-height:1.1">${name}</div><span style="font-size:12px;color:var(--color-primary-dark);background:var(--color-bg-secondary);border:1px solid var(--color-border-light);padding:2px 8px;border-radius:999px">Клиент</span></div>
                   <div style="color:var(--color-primary);font-size:18px;line-height:1">${Utils.renderStars(r._rating)}</div>
                 </div>
               </div>
