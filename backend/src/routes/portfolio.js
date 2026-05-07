@@ -8,15 +8,17 @@ const { masterOrAdmin } = require('../middleware/rbac');
 const { getDb } = require('../database/db');
 
 function ensurePortfolioImagesColumn() {
+  if (portfolioImagesColumnEnsured) return;
   const db = getDb();
   const columns = db.prepare(`PRAGMA table_info(portfolio_items)`).all();
   const hasImageUrls = columns.some(col => col.name === 'image_urls');
   if (!hasImageUrls) {
     db.prepare('ALTER TABLE portfolio_items ADD COLUMN image_urls TEXT').run();
   }
+  portfolioImagesColumnEnsured = true;
 }
 
-ensurePortfolioImagesColumn();
+let portfolioImagesColumnEnsured = false;
 
 
 // Configure multer for image uploads
@@ -91,6 +93,7 @@ router.get('/master/:masterId', authMiddleware, (req, res) => {
 
 // POST /api/portfolio - upload portfolio item
 router.post('/', authMiddleware, masterOrAdmin, upload.array('images', 10), async (req, res) => {
+  ensurePortfolioImagesColumn();
   const db = getDb();
   const { category, title, description, service_id, is_featured, image_url } = req.body;
 
