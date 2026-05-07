@@ -78,7 +78,7 @@ router.get('/master/:masterId', authMiddleware, (req, res) => {
 });
 
 // POST /api/portfolio - upload portfolio item
-router.post('/', authMiddleware, masterOrAdmin, upload.array('images', 20), async (req, res) => {
+router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (req, res) => {
   const db = getDb();
   const { category, title, description, service_id, is_featured, image_url } = req.body;
 
@@ -89,34 +89,32 @@ router.post('/', authMiddleware, masterOrAdmin, upload.array('images', 20), asyn
   const profile = db.prepare('SELECT * FROM masters_profiles WHERE user_id = ?').get(req.user.id);
   if (!profile) return res.status(404).json({ error: 'Master profile not found' });
 
-  const baseUrl = process.env.WEBAPP_URL || `http://localhost:${process.env.PORT || 3001}`;
-  const uploadedUrls = (req.files || []).map(file => `${baseUrl}/uploads/portfolio/${file.filename}`);
+  let finalImageUrl = image_url;
 
-  const images = uploadedUrls.length ? uploadedUrls : (image_url ? [image_url] : []);
-  if (!images.length) {
-    return res.status(400).json({ error: 'At least one image file or image_url is required' });
+  if (req.file) {
+    const baseUrl = process.env.WEBAPP_URL || `http://localhost:${process.env.PORT || 3001}`;
+    finalImageUrl = `${baseUrl}/uploads/portfolio/${req.file.filename}`;
   }
 
-  const insertStmt = db.prepare(`
+  if (!finalImageUrl) {
+    return res.status(400).json({ error: 'Image file or image_url is required' });
+  }
+
+  const result = db.prepare(`
     INSERT INTO portfolio_items (master_id, image_url, category, title, description, service_id, is_featured)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
+  `).run(
+    profile.id,
+    finalImageUrl,
+    category,
+    title || null,
+    description || null,
+    service_id || null,
+    is_featured ? 1 : 0
+  );
 
-  const items = [];
-  for (const image of images) {
-    const result = insertStmt.run(
-      profile.id,
-      image,
-      category,
-      title || null,
-      description || null,
-      service_id || null,
-      is_featured ? 1 : 0
-    );
-    items.push(db.prepare('SELECT * FROM portfolio_items WHERE id = ?').get(result.lastInsertRowid));
-  }
-
-  res.status(201).json({ item: items[0], items, created_count: items.length });
+  const item = db.prepare('SELECT * FROM portfolio_items WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json({ item });
 });
 
 // PUT /api/portfolio/:id - update portfolio item

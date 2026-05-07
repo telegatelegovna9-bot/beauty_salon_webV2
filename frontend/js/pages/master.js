@@ -390,9 +390,8 @@ const MasterProfilePage = {
     Modal.open(`
       <div style="display:flex;flex-direction:column;gap:var(--space-md)">
         <div class="form-group">
-          <label class="form-label">Фото (можно выбрать несколько)</label>
-          <input class="form-input" id="portfolio-files" type="file" accept="image/*" multiple>
-          <div style="margin-top:6px;color:var(--color-text-tertiary);font-size:var(--font-size-xs)">Поддерживаются JPG, PNG, WEBP, GIF. До 20 файлов.</div>
+          <label class="form-label">URL изображения</label>
+          <input class="form-input" id="portfolio-url" placeholder="https://...">
         </div>
         <div class="form-group">
           <label class="form-label">Категория</label>
@@ -412,23 +411,17 @@ const MasterProfilePage = {
   },
 
   async addPortfolioItem() {
-    const files = document.getElementById('portfolio-files')?.files;
+    const url = document.getElementById('portfolio-url')?.value;
     const category = document.getElementById('portfolio-category')?.value;
     const title = document.getElementById('portfolio-title')?.value;
 
-    if (!files || files.length === 0) { Toast.error('Выберите хотя бы одно фото'); return; }
+    if (!url) { Toast.error('Введите URL изображения'); return; }
     if (!category) { Toast.error('Выберите категорию'); return; }
 
-    const formData = new FormData();
-    Array.from(files).forEach(file => formData.append('images', file));
-    formData.append('category', category);
-    if (title) formData.append('title', title);
-
     try {
-      const result = await API.portfolio.create(formData);
+      await API.post('/portfolio', { image_url: url, category, title });
       Modal.close();
-      const createdCount = result?.created_count || result?.items?.length || 1;
-      Toast.success(`Добавлено в портфолио: ${createdCount}`);
+      Toast.success('Добавлено в портфолио');
       await this.loadPortfolio();
     } catch (e) {
       Toast.error(e.message || 'Ошибка');
