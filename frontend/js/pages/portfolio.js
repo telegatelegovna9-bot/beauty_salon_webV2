@@ -135,7 +135,9 @@ const PortfolioPage = {
         <div id="portfolio-gallery-swipe"
              ontouchstart="PortfolioPage.onGalleryTouchStart(event)"
              ontouchend="PortfolioPage.onGalleryTouchEnd(event, ${index}, ${imgIndex}, ${images.length})"
-             style="touch-action:pan-x;user-select:none">
+             onwheel="PortfolioPage.onGalleryWheel(event, ${index}, ${imgIndex}, ${images.length})"
+             onclick="PortfolioPage.onGalleryClick(event, ${index}, ${imgIndex}, ${images.length})"
+             style="touch-action:pan-x;user-select:none;cursor:pointer">
           <div style="height:min(62vh,520px);border-radius:var(--radius-md);overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-sm)">
             <img src="${image}" alt="${item.title || ''}"
                  style="width:100%;height:100%;object-fit:contain;display:block">
@@ -145,7 +147,7 @@ const PortfolioPage = {
           ${item.master_name ? `<span class="chip">👤 ${item.master_name}</span>` : ''}
           <span class="chip chip-primary">${Utils.getCategoryInfo(item.category).emoji} ${Utils.getCategoryInfo(item.category).label}</span>
         </div>
-        ${images.length > 1 ? `<div style="text-align:center;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:6px">${imgIndex + 1} / ${images.length}</div>` : ''}
+        ${images.length > 1 ? `<div style="text-align:center;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:6px">${imgIndex + 1} / ${images.length}</div><div style="text-align:center;font-size:var(--font-size-xs);color:var(--color-text-tertiary);margin-top:2px">ПК: клик по левой/правой части фото или колесо мыши</div>` : ''}
         ${index > 0 || index < filtered.length - 1 ? `
           <div style="display:flex;gap:var(--space-sm);margin-top:var(--space-md)">
             ${index > 0 ? `<button class="btn btn-secondary" style="flex:1" onclick="Modal.close();PortfolioPage.openItem(${index-1}, 0)">← Пред. пост</button>` : ''}
@@ -154,6 +156,26 @@ const PortfolioPage = {
         ` : ''}
       </div>
     `);
+  },
+
+
+  openGalleryStep(postIndex, imgIndex, total, step) {
+    const nextIndex = imgIndex + step;
+    if (nextIndex < 0 || nextIndex >= total) return;
+    Modal.close();
+    this.openItem(postIndex, nextIndex);
+  },
+
+  onGalleryWheel(event, postIndex, imgIndex, total) {
+    if (Math.abs(event.deltaY) < 8) return;
+    event.preventDefault();
+    this.openGalleryStep(postIndex, imgIndex, total, event.deltaY > 0 ? 1 : -1);
+  },
+
+  onGalleryClick(event, postIndex, imgIndex, total) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const isRightSide = (event.clientX - rect.left) > rect.width / 2;
+    this.openGalleryStep(postIndex, imgIndex, total, isRightSide ? 1 : -1);
   },
 
   onGalleryTouchStart(event) {
@@ -165,14 +187,12 @@ const PortfolioPage = {
     const deltaX = endX - (this._galleryTouchStartX || 0);
     if (Math.abs(deltaX) < 35) return;
 
-    if (deltaX < 0 && imgIndex < total - 1) {
-      Modal.close();
-      this.openItem(postIndex, imgIndex + 1);
+    if (deltaX < 0) {
+      this.openGalleryStep(postIndex, imgIndex, total, 1);
       return;
     }
-    if (deltaX > 0 && imgIndex > 0) {
-      Modal.close();
-      this.openItem(postIndex, imgIndex - 1);
+    if (deltaX > 0) {
+      this.openGalleryStep(postIndex, imgIndex, total, -1);
     }
   }
 
