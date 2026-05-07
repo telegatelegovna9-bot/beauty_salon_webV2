@@ -131,13 +131,15 @@ const PortfolioPage = {
 
     const image = images[imgIndex] || images[0];
     Modal.open(`
-      <div style="margin:-var(--space-md);overflow:hidden">
+      <div style="margin:-var(--space-md);overflow:hidden;max-height:82vh">
         <div id="portfolio-gallery-swipe"
              ontouchstart="PortfolioPage.onGalleryTouchStart(event)"
              ontouchend="PortfolioPage.onGalleryTouchEnd(event, ${index}, ${imgIndex}, ${images.length})"
              style="touch-action:pan-x;user-select:none">
-          <img src="${image}" alt="${item.title || ''}"
-               style="width:100%;max-height:68vh;object-fit:contain;border-radius:var(--radius-md);margin-bottom:var(--space-sm)">
+          <div style="height:min(62vh,520px);border-radius:var(--radius-md);overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;margin-bottom:var(--space-sm)">
+            <img src="${image}" alt="${item.title || ''}"
+                 style="width:100%;height:100%;object-fit:contain;display:block">
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px">
           ${item.master_name ? `<span class="chip">👤 ${item.master_name}</span>` : ''}
