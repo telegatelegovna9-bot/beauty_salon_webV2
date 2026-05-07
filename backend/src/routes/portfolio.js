@@ -38,7 +38,7 @@ router.get('/', authMiddleware, (req, res) => {
   const { master_id, category, limit = 50, offset = 0 } = req.query;
 
   let query = `
-    SELECT pi.*, mp.display_name as master_name, mp.id as master_profile_id
+    SELECT pi.*, mp.display_name as master_name, mp.avatar_url as master_avatar_url, mp.id as master_profile_id
     FROM portfolio_items pi
     JOIN masters_profiles mp ON pi.master_id = mp.id
     JOIN categories c ON c.key = pi.category

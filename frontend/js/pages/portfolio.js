@@ -92,8 +92,17 @@ const PortfolioPage = {
               <div class="portfolio-item-overlay"></div>
             </div>
             <div class="portfolio-item-content">
-              ${item.title ? `<div class="portfolio-item-title">${item.title}</div>` : ''}
-              ${item.description ? `<div class="portfolio-item-desc">${item.description}</div>` : ''}
+              <div class="portfolio-master-meta">
+                <div class="portfolio-master-avatar">
+                  ${item.master_avatar_url
+                    ? `<img src="${item.master_avatar_url}" alt="${item.master_name || 'Мастер'}" loading="lazy">`
+                    : Utils.getInitials(item.master_name || 'Мастер')}
+                </div>
+                <div>
+                  <div class="portfolio-master-name">${item.master_name || 'Мастер'}</div>
+                  <div class="portfolio-master-category">${Utils.getCategoryInfo(item.category).label}</div>
+                </div>
+              </div>
             </div>
           </div>
         `).join('')}
