@@ -254,19 +254,20 @@ const App = {
 const style = document.createElement('style');
 style.textContent = `
   .master-tab {
-    padding: 14px 20px;
+    padding: 14px 16px;
     font-size: var(--font-size-sm);
     font-weight: 500;
     color: var(--color-text-secondary);
     border-bottom: 2px solid transparent;
     transition: all var(--transition-fast);
     white-space: nowrap;
-    flex-shrink: 0;
+    flex: 1;
+    text-align: center;
   }
   .master-tab.active {
-    color: var(--color-text-primary);
+    color: var(--color-primary-dark);
     border-bottom-color: var(--color-primary);
-    font-weight: 600;
+    font-weight: 700;
   }
 `;
 document.head.appendChild(style);

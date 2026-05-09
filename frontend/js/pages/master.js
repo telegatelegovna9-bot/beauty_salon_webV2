@@ -27,31 +27,38 @@ const MasterDetailPage = {
       const name = master.display_name || Utils.getMasterName(master);
       const specs = Array.isArray(master.specializations) ? master.specializations : [];
 
+      const shortBio = master.bio || 'Создаю образы, в которых клиенту знакома лучшая версия. Работаю с цветом, формой и характером.';
+      const reviewsCount = Number(master.reviews_count) || 0;
+      const reviewWord = this.getReviewWord(reviewsCount);
+      const hasReviews = reviewsCount > 0;
+      const hasRating = Number(master.rating) > 0;
+      const experienceYears = Number(master.experience_years) || 7;
+      const experienceWord = this.getYearsWord(experienceYears);
+      const stats = [
+        hasRating ? `⭐ ${Number(master.rating).toFixed(1)}` : '',
+        hasReviews ? `<span class="master-stat-icon">💬</span> ${reviewsCount} ${reviewWord}` : '',
+        `<span class="master-stat-icon">⏱</span> ${experienceYears} ${experienceWord} опыта`
+      ].filter(Boolean);
       container.innerHTML = `
-        <!-- Master Header -->
-        <div style="background:linear-gradient(135deg,#FFB6C1,#FF69B4);padding:var(--space-xl) var(--space-md);color:white;text-align:center">
-          <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#FFB6C1,#FF69B4);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:white;border:2px solid rgba(255,105,180,0.4);margin:0 auto var(--space-md)">
-            ${master.avatar_url
-              ? `<img src="${master.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover">`
-              : Utils.getInitials(name)}
-          </div>
-          <div style="font-size:var(--font-size-xl);font-weight:700;margin-bottom:4px">${name}</div>
-          ${specs.length > 0 ? `<div style="color:var(--color-primary-light);font-size:var(--font-size-sm)">${specs.join(' · ')}</div>` : ''}
-          ${master.rating ? `
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px">
-              <span style="color:var(--color-primary);font-size:18px">★</span>
-              <span style="font-weight:600">${master.rating.toFixed(1)}</span>
-              <span style="color:rgba(255,255,255,0.7)">(${master.reviews_count} отзывов)</span>
+        <div class="master-hero-bg"></div>
+        <div class="master-hero-card-wrap">
+          <div class="master-hero-card">
+            <div class="master-hero-avatar">
+              ${master.avatar_url
+                ? `<img src="${master.avatar_url}" alt="${name}">`
+                : Utils.getInitials(name)}
             </div>
-          ` : ''}
-          ${master.bio ? `<div style="color:rgba(255,255,255,0.9);font-size:var(--font-size-sm);margin-top:var(--space-sm);line-height:1.6">${master.bio}</div>` : ''}
-          <button class="btn btn-primary" style="margin-top:var(--space-md)" onclick="App.navigate('book', { masterId: ${master.id} })">
-            💅 Записаться
-          </button>
+            ${master.rating ? `<div class="master-hero-rating">⭐ ${master.rating.toFixed(1)}</div>` : ''}
+            <div class="master-hero-name">${name}</div>
+            ${specs.length > 0 ? `<div class="master-hero-specs">${specs.slice(0, 3).map(spec => `<span>${spec}</span>`).join('')}</div>` : ''}
+            <div class="master-hero-stats">${stats.join('<span class="master-stat-dot">•</span>')}</div>
+            <div class="master-hero-bio">${shortBio}</div>
+            <button class="master-hero-btn" onclick="App.navigate('book', { masterId: ${master.id} })"><span class="master-btn-icon">🗓</span> Записаться</button>
+          </div>
         </div>
 
         <!-- Tabs -->
-        <div style="display:flex;border-bottom:1px solid var(--color-border-light);background:var(--color-surface)">
+        <div class="master-tabs-row">
           <button class="master-tab active" data-tab="services" onclick="MasterDetailPage.switchTab('services')">Услуги</button>
           <button class="master-tab" data-tab="portfolio" onclick="MasterDetailPage.switchTab('portfolio')">Портфолио</button>
           <button class="master-tab" data-tab="reviews" onclick="MasterDetailPage.switchTab('reviews')">Отзывы</button>
@@ -70,6 +77,22 @@ const MasterDetailPage = {
     } catch (e) {
       container.innerHTML = EmptyState.render('⚠️', 'Ошибка загрузки', e.message);
     }
+  },
+
+  getReviewWord(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'отзыв';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'отзыва';
+    return 'отзывов';
+  },
+
+  getYearsWord(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'год';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'года';
+    return 'лет';
   },
 
   switchTab(tab) {
@@ -116,19 +139,62 @@ const MasterDetailPage = {
     if (!reviews || reviews.length === 0) {
       return EmptyState.render('⭐', 'Нет отзывов', 'Будьте первым, кто оставит отзыв');
     }
-    return `<div style="display:flex;flex-direction:column;gap:var(--space-md)">
-      ${reviews.map(r => `
-        <div class="card">
-          <div class="card-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-              <div style="font-weight:600">${r.first_name || r.username || 'Клиент'}</div>
-              <div style="color:var(--color-primary)">${Utils.renderStars(r.rating)}</div>
-            </div>
-            ${r.comment ? `<div style="color:var(--color-text-secondary);font-size:var(--font-size-sm)">${r.comment}</div>` : ''}
-            <div style="font-size:var(--font-size-xs);color:var(--color-text-tertiary);margin-top:4px">${Utils.formatDate(r.created_at?.split('T')[0], 'short')}</div>
+
+    const safeReviews = reviews.map(r => ({ ...r, _rating: Number(r.rating) || 0 }));
+    const total = safeReviews.length;
+    const avg = safeReviews.reduce((sum, r) => sum + r._rating, 0) / total;
+    const stars = [5, 4, 3, 2, 1].map(star => {
+      const count = safeReviews.filter(r => Math.round(r._rating) === star).length;
+      const percent = total ? (count / total) * 100 : 0;
+      return `<div style="display:grid;grid-template-columns:34px 1fr 24px;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary)">
+        <span style="display:flex;align-items:center;gap:2px"><span>${star}</span><span style="color:var(--color-primary)">★</span></span>
+        <div style="height:6px;background:var(--color-border-light);border-radius:999px;overflow:hidden"><div style="height:100%;width:${percent}%;background:linear-gradient(135deg,#ff69b4,#ff1493)"></div></div>
+        <span style="text-align:right">${count}</span>
+      </div>`;
+    }).join('');
+
+    return `<div style="display:flex;flex-direction:column;gap:var(--space-sm)">
+      <div class="card" style="border-radius:16px;background:#fff;border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm)">
+        <div class="card-body" style="display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;padding:14px">
+          <div style="text-align:center;border-right:1px solid var(--color-border-light);padding-right:10px">
+            <div style="font-size:40px;font-weight:800;line-height:1;color:var(--color-text-primary)">${avg.toFixed(1)}</div>
+            <div style="color:var(--color-primary);font-size:20px;letter-spacing:1px">★★★★★</div>
+            <div style="color:var(--color-text-secondary);font-size:13px">${total} ${this.getReviewWord(total)}</div>
           </div>
+          <div style="display:flex;flex-direction:column;gap:6px">${stars}</div>
         </div>
-      `).join('')}
+      </div>
+
+      ${safeReviews.map(r => {
+        const name = r.first_name || r.username || 'Клиент';
+        const initials = Utils.getInitials(name);
+        let dateTime = '--:--';
+        if (r.created_at) {
+          const d = new Date(r.created_at);
+          if (!Number.isNaN(d.getTime())) {
+            const datePart = r.created_at.includes('T') ? r.created_at.split('T')[0] : r.created_at;
+            dateTime = `${Utils.formatDate(datePart, 'short')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          }
+        }
+
+        return `<div class="card" style="border-radius:16px;overflow:hidden;background:#fff;border:1px solid var(--color-border-light);box-shadow:var(--shadow-sm)">
+          <div class="card-body" style="padding:14px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;color:var(--color-primary-dark);font-size:12px;font-weight:700;flex-shrink:0">
+                  ${r.client_avatar_url ? `<img src="${r.client_avatar_url}" alt="${name}" style="width:100%;height:100%;object-fit:cover">` : initials}
+                </div>
+                <div style="min-width:0">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><div style="font-size:22px;font-weight:700;line-height:1.1">${name}</div><span style="font-size:12px;color:var(--color-primary-dark);background:var(--color-bg-secondary);border:1px solid var(--color-border-light);padding:2px 8px;border-radius:999px">Клиент</span></div>
+                  <div style="color:var(--color-primary);font-size:18px;line-height:1">${Utils.renderStars(r._rating)}</div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:var(--color-text-tertiary);white-space:nowrap">${dateTime}</div>
+            </div>
+            <div style="color:var(--color-text-secondary);font-size:14px;line-height:1.45">${r.comment || 'Без комментария'}</div>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
   },
 
@@ -367,8 +433,9 @@ const MasterProfilePage = {
     Modal.open(`
       <div style="display:flex;flex-direction:column;gap:var(--space-md)">
         <div class="form-group">
-          <label class="form-label">URL изображения</label>
-          <input class="form-input" id="portfolio-url" placeholder="https://...">
+          <label class="form-label">Фото (до 10 штук)</label>
+          <input class="form-input" id="portfolio-files" type="file" accept="image/*" multiple>
+          <div style="margin-top:6px;color:var(--color-text-tertiary);font-size:var(--font-size-xs)">Можно выбрать несколько фото — они создадут один пост-галерею.</div>
         </div>
         <div class="form-group">
           <label class="form-label">Категория</label>
@@ -388,17 +455,23 @@ const MasterProfilePage = {
   },
 
   async addPortfolioItem() {
-    const url = document.getElementById('portfolio-url')?.value;
+    const files = document.getElementById('portfolio-files')?.files;
     const category = document.getElementById('portfolio-category')?.value;
     const title = document.getElementById('portfolio-title')?.value;
 
-    if (!url) { Toast.error('Введите URL изображения'); return; }
+    if (!files || files.length === 0) { Toast.error('Выберите хотя бы одно фото'); return; }
+    if (files.length > 10) { Toast.error('Можно загрузить максимум 10 фото'); return; }
     if (!category) { Toast.error('Выберите категорию'); return; }
 
+    const formData = new FormData();
+    Array.from(files).forEach(file => formData.append('images', file));
+    formData.append('category', category);
+    if (title) formData.append('title', title);
+
     try {
-      await API.post('/portfolio', { image_url: url, category, title });
+      const result = await API.portfolio.create(formData);
       Modal.close();
-      Toast.success('Добавлено в портфолио');
+      Toast.success(`Пост добавлен (${result?.images_count || files.length} фото)`);
       await this.loadPortfolio();
     } catch (e) {
       Toast.error(e.message || 'Ошибка');

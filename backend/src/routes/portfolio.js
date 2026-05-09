@@ -7,10 +7,32 @@ const { authMiddleware } = require('../middleware/auth');
 const { masterOrAdmin } = require('../middleware/rbac');
 const { getDb } = require('../database/db');
 
+function ensurePortfolioImagesColumn() {
+  if (portfolioImagesColumnEnsured) return;
+  const db = getDb();
+  const columns = db.prepare(`PRAGMA table_info(portfolio_items)`).all();
+  const hasImageUrls = columns.some(col => col.name === 'image_urls');
+  if (!hasImageUrls) {
+    db.prepare('ALTER TABLE portfolio_items ADD COLUMN image_urls TEXT').run();
+  }
+  portfolioImagesColumnEnsured = true;
+}
+
+let portfolioImagesColumnEnsured = false;
+
+
+function getUploadsRoot() {
+  return path.resolve(process.env.UPLOADS_PATH || './uploads');
+}
+
+function getPortfolioUploadDir() {
+  return path.join(getUploadsRoot(), 'portfolio');
+}
+
 // Configure multer for image uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.resolve(process.env.UPLOADS_PATH || './uploads/portfolio');
+    const uploadDir = getPortfolioUploadDir();
     if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
     cb(null, uploadDir);
   },
@@ -38,9 +60,11 @@ router.get('/', authMiddleware, (req, res) => {
   const { master_id, category, limit = 50, offset = 0 } = req.query;
 
   let query = `
-    SELECT pi.*, mp.display_name as master_name, mp.id as master_profile_id
+    SELECT pi.*, mp.display_name as master_name,
+      COALESCE(mp.avatar_url, u.avatar_url) as master_avatar_url, mp.id as master_profile_id
     FROM portfolio_items pi
     JOIN masters_profiles mp ON pi.master_id = mp.id
+    JOIN users u ON mp.user_id = u.id
     JOIN categories c ON c.key = pi.category
     WHERE mp.is_active = 1 AND c.is_active = 1
   `;
@@ -76,7 +100,8 @@ router.get('/master/:masterId', authMiddleware, (req, res) => {
 });
 
 // POST /api/portfolio - upload portfolio item
-router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (req, res) => {
+router.post('/', authMiddleware, masterOrAdmin, upload.array('images', 10), async (req, res) => {
+  ensurePortfolioImagesColumn();
   const db = getDb();
   const { category, title, description, service_id, is_featured, image_url } = req.body;
 
@@ -87,23 +112,25 @@ router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (r
   const profile = db.prepare('SELECT * FROM masters_profiles WHERE user_id = ?').get(req.user.id);
   if (!profile) return res.status(404).json({ error: 'Master profile not found' });
 
-  let finalImageUrl = image_url;
+  const reqProto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  const reqHost = req.headers['x-forwarded-host'] || req.get('host');
+  const runtimeBaseUrl = reqHost ? `${reqProto}://${reqHost}` : null;
+  const baseUrl = (process.env.WEBAPP_URL || runtimeBaseUrl || `http://localhost:${process.env.PORT || 3001}`).replace(/\/$/, '');
+  const uploadedUrls = (req.files || []).map(file => `${baseUrl}/uploads/portfolio/${file.filename}`);
+  const images = uploadedUrls.length ? uploadedUrls : (image_url ? [image_url] : []);
 
-  if (req.file) {
-    const baseUrl = process.env.WEBAPP_URL || `http://localhost:${process.env.PORT || 3001}`;
-    finalImageUrl = `${baseUrl}/uploads/portfolio/${req.file.filename}`;
+  if (!images.length) {
+    return res.status(400).json({ error: 'At least one image file or image_url is required' });
   }
 
-  if (!finalImageUrl) {
-    return res.status(400).json({ error: 'Image file or image_url is required' });
-  }
-
+  const primaryImage = images[0];
   const result = db.prepare(`
-    INSERT INTO portfolio_items (master_id, image_url, category, title, description, service_id, is_featured)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO portfolio_items (master_id, image_url, image_urls, category, title, description, service_id, is_featured)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     profile.id,
-    finalImageUrl,
+    primaryImage,
+    JSON.stringify(images),
     category,
     title || null,
     description || null,
@@ -112,7 +139,7 @@ router.post('/', authMiddleware, masterOrAdmin, upload.single('image'), async (r
   );
 
   const item = db.prepare('SELECT * FROM portfolio_items WHERE id = ?').get(result.lastInsertRowid);
-  res.status(201).json({ item });
+  res.status(201).json({ item, images_count: images.length });
 });
 
 // PUT /api/portfolio/:id - update portfolio item
@@ -170,7 +197,7 @@ router.delete('/:id', authMiddleware, masterOrAdmin, (req, res) => {
   // Delete file if local
   if (item.image_url && item.image_url.includes('/uploads/')) {
     const filename = path.basename(item.image_url);
-    const filePath = path.resolve(process.env.UPLOADS_PATH || './uploads/portfolio', filename);
+    const filePath = path.join(getPortfolioUploadDir(), filename);
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   }
 
